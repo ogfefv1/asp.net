@@ -87,12 +87,12 @@ namespace AspKnP231.Controllers
         [HttpPost]
         public IActionResult SignUpForm(UserSignupFormModel formModel)
         {
-            // Перевірка мінімального віку - 3650 = 10 років
+ 
             if (formModel.UserBirthdate != null && (DateTime.Now - formModel.UserBirthdate!.Value).Days < 3650)
             {
                 ModelState.AddModelError("user-birthdate", "Вік замалий для реєстрації");
             }
-            // Валідація паролю - ДЗ
+
             if (formModel.UserPassword != formModel.UserRepeat)
             {
                 ModelState.AddModelError("user-repeat", "Повтор не збігається з паролем");
@@ -106,17 +106,23 @@ namespace AspKnP231.Controllers
                 }
             }
 
-            if (ModelState.IsValid && formModel.UserAvatar != null && formModel.UserAvatar.Length > 0)
+            // --- ПОЧАТОК ДЗ: Валідація аватарки ---
+            if (formModel.UserAvatar != null && formModel.UserAvatar.Length > 0)
             {
-                /* Д.З. Забезпечити валідацію файлу-аватарки
-                 * на предмет того, що його розширення відповідає
-                 * графічним файлам. Перелік узгодити з вибором MIME 
-                 * типів у контролері Storage.
-                 * Якщо файл має неприпустимий тип, то додавати 
-                 * помилку валідації даного поля та виводити її на формі.
-                 */
-                formModel.SavedFilename = _storageService.Save(formModel.UserAvatar);
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+                string ext = System.IO.Path.GetExtension(formModel.UserAvatar.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(ext))
+                {
+                    ModelState.AddModelError("user-avatar", "Дозволені лише графічні файли (jpg, png, gif тощо).");
+                }
+                else if (ModelState.IsValid)
+                {
+                    formModel.SavedFilename = _storageService.Save(formModel.UserAvatar);
+                }
             }
+            // --- КІНЕЦЬ ДЗ ---
 
             HttpContext.Session.SetString(
                 nameof(ModelState),
