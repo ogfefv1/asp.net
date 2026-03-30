@@ -75,7 +75,8 @@ namespace AspKnP231.Controllers
             }
 
 
-            // Перевірка пароля на надійність
+            
+            // ДЗ ПЕРЕВiРКА ПАРОЛЯ
             string pass = formModel.UserPassword;
 
             if (string.IsNullOrEmpty(pass) || pass.Length < 6)
@@ -98,13 +99,8 @@ namespace AspKnP231.Controllers
             {
                 ModelState.AddModelError("user-password", "Пароль має містити принаймні один спецсимвол");
             }
-            /* Реалізувати перевірку пароля на надійність:
-             * - довжина щонайменше 6 символів
-             * - містить принаймні одну цифру
-             * - містить принаймні одну маленьку літеру
-             * - містить принаймні одну велику літеру
-             * - містить принаймні один спецсимвол (не-літера, не-цифра)
-             */
+      
+
 
             HttpContext.Session.SetString(
                 nameof(ModelState),
