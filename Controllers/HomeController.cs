@@ -73,6 +73,31 @@ namespace AspKnP231.Controllers
             {
                 ModelState.AddModelError("user-login", "Даний логін вже у вжитку");
             }
+
+
+            // Перевірка пароля на надійність
+            string pass = formModel.UserPassword;
+
+            if (string.IsNullOrEmpty(pass) || pass.Length < 6)
+            {
+                ModelState.AddModelError("user-password", "Пароль має бути щонайменше 6 символів");
+            }
+            else if (!pass.Any(char.IsDigit))
+            {
+                ModelState.AddModelError("user-password", "Пароль має містити принаймні одну цифру");
+            }
+            else if (!pass.Any(char.IsLower))
+            {
+                ModelState.AddModelError("user-password", "Пароль має містити принаймні одну маленьку літеру");
+            }
+            else if (!pass.Any(char.IsUpper))
+            {
+                ModelState.AddModelError("user-password", "Пароль має містити принаймні одну велику літеру");
+            }
+            else if (!pass.Any(c => !char.IsLetterOrDigit(c)))
+            {
+                ModelState.AddModelError("user-password", "Пароль має містити принаймні один спецсимвол");
+            }
             /* Реалізувати перевірку пароля на надійність:
              * - довжина щонайменше 6 символів
              * - містить принаймні одну цифру
