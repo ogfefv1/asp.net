@@ -1,4 +1,13 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // ТИМЧАСОВІ ЗМІННІ ДЛЯ ПЕРЕВІРКИ ДЗ (Для скріншотів)
+    // Зміни isAuthenticated на false, щоб побачити кнопки Входу/Реєстрації
+    bool isAuthenticated = true;
+
+    // Впиши сюди ім'я файлу (наприклад "1.png"), щоб побачити картинку замість іконки
+    string avatarFilename = "6334dfc3-5b72-4a40-b2cc-a9ab893b9492.png";
+    bool hasAvatar = !string.IsNullOrEmpty(avatarFilename);
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -46,8 +55,30 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Forms"><i class="bi bi-card-checklist header-icon"></i></a>
                         </li>
                     </ul>
+
                     <div>
-                        <!-- Button trigger modal -->
+                        @if (isAuthenticated)
+                        {
+                        <a asp-controller="User" asp-action="Profile"
+                           class="btn btn-outline-info rounded-circle p-0 me-2"
+                           style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; vertical-align: middle;">
+
+                            @if (hasAvatar)
+                                {
+                            <img src="/Storage/Item/@avatarFilename" alt="Профіль" style="width: 100%; height: 100%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                            <i class="bi bi-person fs-4"></i>
+                                }
+                        </a>
+
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                            <i class="bi bi-box-arrow-right"></i> Вихід
+                        </button>
+                        }
+                        else
+                        {
                         <button type="button" class="btn btn-outline-success me-2"
                                 data-bs-toggle="modal" data-bs-target="#authModal">
                             <i class="bi bi-box-arrow-in-right"></i>
@@ -56,6 +87,7 @@
                         <a asp-controller="User" asp-action="SignUp"
                            title="Реєстрація нового користувача"
                            class="btn btn-outline-secondary"><i class="bi bi-person-add"></i></a>
+                        }
                     </div>
                 </div>
             </div>
@@ -73,9 +105,6 @@
         </div>
     </footer>
 
-
-
-    <!-- Auth Modal -->
     <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -105,6 +134,26 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
                         <button form="auth-form" type="submit" class="btn btn-primary">Вхід</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h1 class="modal-title fs-6" id="logoutModalLabel">Підтвердження</h1>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center mt-2 mb-2">
+                    <i class="bi bi-exclamation-circle text-danger fs-1 d-block mb-2"></i>
+                    <strong>Ви виходите з системи.</strong><br />
+                    Підтверджуєте?
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ні</button>
+                    <a asp-controller="User" asp-action="Logout" class="btn btn-danger">Так</a>
                 </div>
             </div>
         </div>
