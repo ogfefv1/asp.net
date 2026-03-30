@@ -97,9 +97,14 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                    <button form="auth-form" type="submit" class="btn btn-primary">Вхід</button>
+                <div class="modal-footer d-flex justify-content-between w-100">
+                    <div id="auth-alert" class="alert alert-danger d-none p-2 mb-0 flex-grow-1 me-3" role="alert" style="font-size: 0.9rem;">
+                    </div>
+
+                    <div class="text-nowrap">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                        <button form="auth-form" type="submit" class="btn btn-primary">Вхід</button>
+                    </div>
                 </div>
             </div>
         </div>
