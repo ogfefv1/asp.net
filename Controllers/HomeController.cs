@@ -1,12 +1,14 @@
-using System.Diagnostics;
-using System.Text.Json;
 using AspKnP231.Data;
 using AspKnP231.Models;
 using AspKnP231.Models.Home;
 using AspKnP231.Services.Hash;
+using AspKnP231.Services.Kdf;
 using AspKnP231.Services.Scoped;
+using AspKnP231.Services.Time;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace AspKnP231.Controllers
 {
@@ -14,13 +16,18 @@ namespace AspKnP231.Controllers
     {
         private readonly DataContext _dataContext;
         private readonly ScopedService _scopedService;
-        private readonly IHashService _hashService;           // Інжекція сервісу "через конструктор" -
-                                                              // рекомендований спосіб, передбачає 
-        public HomeController(IHashService hashService, ScopedService scopedService, DataContext dataContext)
+        private readonly IHashService _hashService;
+        private readonly IDateTimeService _timeService; // Додано для ДЗ (Час)
+        private readonly IKdfService _kdfService;// Інжекція сервісу "через конструктор" -
+                                                 // рекомендований спосіб, передбачає 
+        public HomeController(IHashService hashService, ScopedService scopedService, DataContext dataContext, IDateTimeService timeService,
+    IKdfService kdfService)
         {                                                     // readonly поле - посилання на сервіс та 
             _hashService = hashService;                       // параметр(и) конструктора того ж типу даних
             _scopedService = scopedService;
             _dataContext = dataContext;
+            _timeService = timeService;
+            _kdfService = kdfService;
         }
 
         public IActionResult Forms()
@@ -96,37 +103,41 @@ namespace AspKnP231.Controllers
 
         public IActionResult IoC()
         {
-            // використовуємо сервіс і передаємо дані до представлення
+          
             ViewData["hash"] = _hashService.Digest("123");
             ViewData["hashCode"] = _hashService.GetHashCode();
             ViewData["ControllerScopedHash"] = _scopedService.GetHashCode();
             return View();
         }
 
-        // Зв'язування моделі відбувається коли ми її зазначаємо вхідними параметром Action
-        // В старих ASP, якщо модель не є обов'язковою, то необхідно
-        // зазначати Nullable (HomeModelsFormModel?)
-        public IActionResult Models(HomeModelsFormModel formModel)
-        {
-            // Особливість нових ASP - модель форми, як об'єкт, створюється
-            // у будь-якому випадку, навіть якщо немає даних від форми
-            // З метою розрізнення випадків наявності/відсутності даних вводиться
-            // елемент форми, що відповідає за кнопку надсилання форми.
 
+
+        // ДЗ Форма на странице Model
+        public IActionResult Models()
+        {
             HomeModelsViewModel viewModel = new();
-            if (formModel.UserButton != null)
+
+            if (HttpContext.Session.Keys.Contains(nameof(HomeModelsFormModel)))
             {
-                viewModel.FormModel = formModel;
+                viewModel.FormModel = JsonSerializer.Deserialize<HomeModelsFormModel>(
+                    HttpContext.Session.GetString(nameof(HomeModelsFormModel))!
+                );
+                HttpContext.Session.Remove(nameof(HomeModelsFormModel));
             }
 
             return View(viewModel);
         }
-        /* Д.З. Зробити сторінку з формою реєстрації нового користувача
-         * Описати усі необхідні моделі
-         */
-        public IActionResult Razor()
+
+
+        [HttpPost]
+        public IActionResult ModelsReceiver(HomeModelsFormModel formModel)
         {
-            return View();
+            HttpContext.Session.SetString(
+                nameof(HomeModelsFormModel),
+                JsonSerializer.Serialize(formModel)
+            );
+
+            return RedirectToAction(nameof(Models));
         }
 
         public IActionResult Intro()
@@ -141,6 +152,9 @@ namespace AspKnP231.Controllers
 
         public IActionResult Index()
         {
+            ViewData["CurrentDate"] = _timeService.GetDate();
+            ViewData["CurrentTime"] = _timeService.GetTime();
+
             return View();
         }
 
@@ -153,6 +167,30 @@ namespace AspKnP231.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+        [HttpGet]
+        public IActionResult CalculateDk()
+        {
+            return View(new DkViewModel());
+        }
+
+        [HttpPost]
+        public IActionResult CalculateDk(DkViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.Password))
+            {
+                ModelState.AddModelError("Password", "Пароль є обов'язковим");
+                return View(model);
+            }
+
+            if (model.AutoGenerateSalt || string.IsNullOrEmpty(model.Salt))
+            {
+                model.Salt = Guid.NewGuid().ToString("N")[..16];
+            }
+
+            model.ResultDk = _kdfService.Dk(model.Salt, model.Password);
+
+            return View(model);
         }
     }
 }

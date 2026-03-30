@@ -1,10 +1,11 @@
-﻿namespace AspKnP231.Services.Storage
+﻿using System;
+
+namespace AspKnP231.Services.Time
 {
-    public static class StorageExtension
+    public class NationalDateTimeService : IDateTimeService
     {
-        public static IServiceCollection AddStorage(this IServiceCollection services)
-        {
-            return services.AddSingleton<IStorageService, LocalStorageService>();
-        }
+        public string GetDate() => DateTime.Now.ToString("dd.MM.yyyy");
+
+        public string GetTime() => DateTime.Now.ToString("HH:mm:ss");
     }
 }

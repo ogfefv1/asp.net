@@ -5,6 +5,7 @@ using AspKnP231.Services.Kdf;
 using AspKnP231.Services.Storage;
 using AspKnP231.Data;
 using Microsoft.EntityFrameworkCore;
+using AspKnP231.Services.Time;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHash();   // замінено на розширення (див. HashExtension)
 builder.Services.AddKdf();
 builder.Services.AddStorage();
+builder.Services.AddTransient<IDateTimeService, SqlDateTimeService>();
 
 builder.Services.AddScoped<ScopedService>();    // без інтерфейсу - тільки один параметр типу
 

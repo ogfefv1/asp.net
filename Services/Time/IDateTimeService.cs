@@ -1,10 +1,8 @@
-﻿namespace AspKnP231.Services.Storage
+﻿namespace AspKnP231.Services.Time
 {
-    public static class StorageExtension
+    public interface IDateTimeService
     {
-        public static IServiceCollection AddStorage(this IServiceCollection services)
-        {
-            return services.AddSingleton<IStorageService, LocalStorageService>();
-        }
+        string GetDate();
+        string GetTime();
     }
 }
