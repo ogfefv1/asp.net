@@ -6,6 +6,7 @@ using AspKnP231.Services.Storage;
 using AspKnP231.Data;
 using Microsoft.EntityFrameworkCore;
 using AspKnP231.Services.Time;
+using AspKnP231.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,7 @@ app.UseSession();       // Включення сесій https://learn.microsoft
 // порядок оголошення відповідає за порядок зв'язування (послідовності next())
 // тому порядок важливо дотримуватись, якщо один обробник залежить від інших
 // (на відміну від сервісів, порядок додавання яких не грає ролі)
+app.UseTimeMeasure();
 app.UseDemo();
 
 

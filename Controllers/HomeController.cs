@@ -145,6 +145,13 @@ namespace AspKnP231.Controllers
             return View();
         }
 
+        public IActionResult TimeResearch()
+        {
+            HttpContext.Items["ControllerTime"] = DateTime.Now.Ticks;
+
+            return View();
+        }
+
         public IActionResult UnLayout()
         {
             return View();

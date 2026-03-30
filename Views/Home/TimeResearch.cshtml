@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Дослідження часу";
+
+    long viewTime = DateTime.Now.Ticks;
+
+    long middlewareTime = (long)(Context.Items["MiddlewareTime"] ?? 0L);
+    long controllerTime = (long)(Context.Items["ControllerTime"] ?? 0L);
+
+    long diffController = controllerTime - middlewareTime;
+    long diffView = viewTime - controllerTime;
+}
+
+<h2>Час оброблення запиту</h2>
+
+<table border="1" cellpadding="10" cellspacing="0">
+    <tr>
+        <th>Етап</th>
+        <th>Мітка часу (Ticks)</th>
+        <th>Різниця (в тіках)</th>
+    </tr>
+    <tr>
+        <td>Middleware</td>
+        <td>@middlewareTime</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Controller</td>
+        <td>@controllerTime</td>
+        <td>+ @diffController</td>
+    </tr>
+    <tr>
+        <td>View</td>
+        <td>@viewTime</td>
+        <td>+ @diffView</td>
+    </tr>
+</table>
