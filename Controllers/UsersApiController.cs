@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AspKnP231.Controllers
 {
 
-    [Route("api/[controller]")]
+    [Route("api/users")]
     [ApiController]
     public class UsersApiController : ControllerBase
     {
@@ -41,5 +41,48 @@ namespace AspKnP231.Controllers
 
             return Ok(allUsers);
         }
+
+
+
+
+
+
+        // Д.З. Доповнити АРІ-контролер перегляду користувачів (попереднє ДЗ) методом,
+        //що видаватиме відомості про окремого користувача за його ID або логіном /api/users 
+        //-- всі користувачі /api/users/admin -- окремий користувач /api/users/523409870-12934-1235471-51235 -- окремий користувач теперь это
+
+        [HttpGet("{idOrLogin}")]
+        public IActionResult GetUser(string idOrLogin)
+        {
+
+            AspKnP231.Data.Entities.UserAccess? user = null;
+
+            if (Guid.TryParse(idOrLogin, out Guid parsedId))
+            {
+                user = _dataContext.UserAccesses
+                    .Include(u => u.UserData)
+                    .FirstOrDefault(u => u.UserId == parsedId);
+            }
+            else
+            {
+                user = _dataContext.UserAccesses
+                    .Include(u => u.UserData)
+                    .FirstOrDefault(u => u.Login == idOrLogin);
+            }
+            if (user == null)
+            {
+                return NotFound(new { message = "Користувача не знайдено." });
+            }
+
+            return Ok(new
+            {
+                id = user.UserId,
+                login = user.Login,
+                name = user.UserData?.Name,
+                email = user.UserData?.Email,
+                role = user.UserRoleId
+            });
+        }
     }
+
 }
