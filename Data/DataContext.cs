@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AspKnP231.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AspKnP231.Data
 {
@@ -9,6 +10,8 @@ namespace AspKnP231.Data
         public DbSet<Entities.UserData> UsersData { get; set; }
 
         public DbSet<Entities.UserRole> UserRoles { get; set; }
+        public DbSet<ShopSection> ShopSections { get; set; }
+        public DbSet<ShopProduct> ShopProducts { get; set; }
 
 
         public DataContext(DbContextOptions options) : base(options) { }
@@ -26,7 +29,7 @@ namespace AspKnP231.Data
                 .HasOne(a => a.UserData)                // визначенням ключів поєднання якщо: один з них Id або TableId
                 .WithMany(d => d.UserAccesses)          // інший - TableId (UserDataId), оскільки останнє порушується
                 .HasForeignKey(a => a.UserId);          // необхідно прямо зазначити ключ
-                // .HasPrincipalKey(d => d.Id)          // інший - за правилом, можна не зазначати
+                                                        // .HasPrincipalKey(d => d.Id)          // інший - за правилом, можна не зазначати
 
             modelBuilder.Entity<Entities.UserAccess>()  // Іменування усіх ключів - за правилом, можна не зазначати,
                 .HasOne(a => a.UserRole)                // За відсутності інверсної властивості WithMany()
