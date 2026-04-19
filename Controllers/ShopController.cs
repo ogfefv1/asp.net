@@ -119,6 +119,76 @@ namespace AspKnP231.Controllers
             return View();
         }
 
+        public IActionResult Discount()
+        {
+            if (HttpContext.User.Identity?.IsAuthenticated ?? false)
+            {
+                String role = HttpContext.User.Claims
+                    .FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? String.Empty;
+
+                if (role == "Admin")
+                {
+                    return View(new AdminDiscountViewModel
+                    {
+                        Discounts = [.. _dataContext.Discounts],
+                        Products = [.. _dataContext.ShopProducts.Where(p => p.DeletedAt == null)],
+                        DiscountDetails = [.. _dataContext.DiscountDetails.Include(d => d.Product).Include(d => d.Discount)]
+                    });
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public JsonResult DiscountDetailFormReceiver(AdminDiscountDetailFormModel formModel)
+        {
+            if (ModelState.IsValid)
+            {
+                _dataContext.DiscountDetails.Add(new()
+                {
+                    Id = Guid.NewGuid(),
+                    DiscountId = Guid.Parse(formModel.DiscountId),
+                    ProductId = Guid.Parse(formModel.ProductId),
+                    Price = (decimal?)formModel.Price
+                });
+                _dataContext.SaveChanges();
+                return Json(new
+                {
+                    status = "OK"
+                });
+            }
+            else
+            {
+                return Json(ModelState);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult DiscountFormReceiver(AdminDiscountFormModel formModel)
+        {
+            if (ModelState.IsValid)
+            {
+                _dataContext.Discounts.Add(new()
+                {
+                    Id = Guid.NewGuid(),
+                    Title = formModel.Title,
+                    Description = formModel.Description,
+                    Percent = formModel.Percent ?? 0,
+                    Price = (decimal?)formModel.Price,
+                    StartMoment = formModel.Start,
+                    FinishMoment = formModel.Finish
+                });
+                _dataContext.SaveChanges();
+                return Json(new
+                {
+                    status = "OK"
+                });
+            }
+            else
+            {
+                return Json(ModelState);
+            }
+        }
 
 
         public IActionResult ProductFormReceiver(ShopProductFormModel formModel)

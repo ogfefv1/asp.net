@@ -1,11 +1,15 @@
-﻿@{
-    // ТИМЧАСОВІ ЗМІННІ ДЛЯ ПЕРЕВІРКИ ДЗ (Для скріншотів)
-    // Зміни isAuthenticated на false, щоб побачити кнопки Входу/Реєстрації
-    bool isAuthenticated = true;
-
-    // Впиши сюди ім'я файлу (наприклад "1.png"), щоб побачити картинку замість іконки
-    string avatarFilename = "6334dfc3-5b72-4a40-b2cc-a9ab893b9492.png";
-    bool hasAvatar = !string.IsNullOrEmpty(avatarFilename);
+﻿@using AspKnP231.Data.Entities
+@using System.Security.Claims
+@{
+    // Перевіряємо наявність авторизації
+    bool isAuthorized =
+        Context.User.Identity?.IsAuthenticated ?? false;
+    String? userAvatar = isAuthorized
+        ? Context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Thumbprint)?.Value
+        : null;
+    String? userName = isAuthorized
+        ? Context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value
+        : null;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -53,6 +57,9 @@
                         </li>
                         <li class="nav-item" title="Робота з формами">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Forms"><i class="bi bi-card-checklist header-icon"></i></a>
+                        </li>
+                        <li class="nav-item" title="Автентифікація та авторизація.">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Index"><i class="bi bi-box-arrow-in-right header-icon"></i></a>
                         </li>
                     </ul>
 

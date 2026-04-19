@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Home Page";
 }
-@kdfService.Dk("380B5CB5-1578-49A2-BCAF-4A1CA8AA9BC2", "A946A088")
+@* @kdfService.Dk("380B5CB5-1578-49A2-BCAF-4A1CA8AA9BC2", "A946A088") *@
 
 <div class="text-center">
     <h1 class="display-4">Програмування з ASP.NET Core та EF Core</h1>
@@ -63,10 +63,33 @@
         </h3>
     </li>
 
-    <div class="mt-4">
-        <h3>Поточна дата: @ViewData["CurrentDate"]</h3>
-        <h3>Поточний час: @ViewData["CurrentTime"]</h3>
-    </div>
+    <li class="list-group-item">
+        <h3 class="display-6">
+            <a class="nav-link" asp-controller="Home" asp-action="Cors">
+                <i class="bi bi-arrow-left-right display-6"></i>
+                Обмін ресурсами. CORS/CORP
+            </a>
+        </h3>
+    </li>
+
+    <li class="list-group-item">
+        <h3 class="display-6">
+            <a class="nav-link" asp-controller="Shop">
+                <i class="bi bi-bag-check display-6"></i>
+                Крамниця
+            </a>
+        </h3>
+    </li>
+
+    <li class="list-group-item">
+        <h3 class="display-6">
+            <a class="nav-link" asp-controller="User">
+                <i class="bi bi-box-arrow-in-right display-6"></i>
+                Автентифікація та авторизація.
+            </a>
+        </h3>
+    </li>
 
 </ul>
+
 

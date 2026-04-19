@@ -21,7 +21,65 @@ namespace AspKnP231.Controllers
 
         public IActionResult Index()
         {
+            ViewData["JwtModel"] = new JwtModel
+            {
+                Payload = new()
+                {
+                    Name = "User",
+                    Email = "user@i.ua",
+                    Dob = "2020-02-02",
+                }
+            };
             return View();
+        }
+
+        public IActionResult Profile()
+        {
+            // Захищаємо сторінку від неавторизованого доступу
+            if (HttpContext.User.Identity?.IsAuthenticated ?? false)
+            {
+                return View();
+            }
+            return Redirect("/");
+        }
+
+        public JsonResult TestAuth()
+        {
+            String authHeader = Request.Headers.Authorization.ToString();
+            if (String.IsNullOrEmpty(authHeader))
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "Missing 'Authorization' header"
+                });
+            }
+            String scheme = "Bearer ";
+            if (!authHeader.StartsWith(scheme))
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "Invalid 'Authorization' scheme. Must be " + scheme
+                });
+            }
+            String token = authHeader[scheme.Length..];
+            // Валідація токена за https://datatracker.ietf.org/doc/html/rfc7519#section-7.2
+            int dotPosition = token.IndexOf('.');
+            if (dotPosition == -1)
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "The JWT must contain at least one period ('.') character "
+                });
+            }
+            String header = token[..dotPosition];
+            return Json(new
+            {
+                status = 200,
+                data = header
+            });
         }
 
         public IActionResult SignUp()
@@ -87,12 +145,12 @@ namespace AspKnP231.Controllers
         [HttpPost]
         public IActionResult SignUpForm(UserSignupFormModel formModel)
         {
- 
+            // Перевірка мінімального віку - 3650 = 10 років
             if (formModel.UserBirthdate != null && (DateTime.Now - formModel.UserBirthdate!.Value).Days < 3650)
             {
                 ModelState.AddModelError("user-birthdate", "Вік замалий для реєстрації");
             }
-
+            // Валідація паролю - ДЗ
             if (formModel.UserPassword != formModel.UserRepeat)
             {
                 ModelState.AddModelError("user-repeat", "Повтор не збігається з паролем");
@@ -106,23 +164,17 @@ namespace AspKnP231.Controllers
                 }
             }
 
-            // --- ПОЧАТОК ДЗ: Валідація аватарки ---
-            if (formModel.UserAvatar != null && formModel.UserAvatar.Length > 0)
+            if (ModelState.IsValid && formModel.UserAvatar != null && formModel.UserAvatar.Length > 0)
             {
-                string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
-
-                string ext = System.IO.Path.GetExtension(formModel.UserAvatar.FileName).ToLower();
-
-                if (!allowedExtensions.Contains(ext))
-                {
-                    ModelState.AddModelError("user-avatar", "Дозволені лише графічні файли (jpg, png, gif тощо).");
-                }
-                else if (ModelState.IsValid)
-                {
-                    formModel.SavedFilename = _storageService.Save(formModel.UserAvatar);
-                }
+                /* Д.З. Забезпечити валідацію файлу-аватарки
+                 * на предмет того, що його розширення відповідає
+                 * графічним файлам. Перелік узгодити з вибором MIME 
+                 * типів у контролері Storage.
+                 * Якщо файл має неприпустимий тип, то додавати 
+                 * помилку валідації даного поля та виводити її на формі.
+                 */
+                formModel.SavedFilename = _storageService.Save(formModel.UserAvatar);
             }
-            // --- КІНЕЦЬ ДЗ ---
 
             HttpContext.Session.SetString(
                 nameof(ModelState),
@@ -137,7 +189,8 @@ namespace AspKnP231.Controllers
         }
 
         [HttpGet]
-        public JsonResult SignIn()
+
+        public JsonResult SignIn([FromRoute] String? id)   // id - з патерну у Program.cs
         {
             // Basic authentication
             String authHeader = Request.Headers.Authorization.ToString();
@@ -205,12 +258,57 @@ namespace AspKnP231.Controllers
                     data = "Authentication rejected."
                 });
             }
-            return Json(new
+
+            if (id == "jwt")
             {
-                status = 200,
-                // data = userAccess.UserData   // Object Cycle
-                data = userAccess.UserData.Name
-            });
+
+                return Json(new
+                {
+                    status = 200,
+                    data = new JwtModel
+                    {
+                        Payload = new()
+                        {
+                            Name = userAccess.UserData.Name,
+                            Email = userAccess.UserData.Email,
+                            Aud = userAccess.UserRoleId == Guid.Parse("250FA2D3-0818-42D6-A1ED-112F115407D6")
+                ? "Admin"
+                : "Guest",
+                            Sub = userAccess.Login,
+                            Dob = userAccess.UserData.Birthdate.ToShortDateString(),
+                            Iat = DateTime.Now.Ticks,
+                            Ava = userAccess.AvatarFilename,
+                            Exp = DateTime.Now.AddMinutes(10).Ticks,
+                            Jti = userAccess.Id.ToString(),
+                        }
+                    }.ToString()
+                });
+            }
+            else
+            {
+                HttpContext.Session.SetString("UserAccess", JsonSerializer.Serialize(userAccess));
+                return Json(new
+                {
+                    status = 200,
+                    data = "OK"
+                });
+            }
+
+
+            /* Авторизація. Збереження результатів автентифікації.
+             * За успішними результатами автентифікації у сесії зберігається
+             * інформація про вхід.
+             * У майбутніх запитах цю інформацію слід відновлювати
+             * та приймати рішення щодо авторизації
+             */
         }
     }
 }
+/* Д.З. Реалізувати стилізацію посилання переходу на 
+ * сторінку профілю користувача в залежності від 
+ * наявності/відсутності картинки-аватарки.
+ * Додати підтвердження виходу з авторизованого 
+ * режиму окремим модальним діалогом
+ * [Ви виходите з системи
+ *  Підтвержуєте
+ *  Так   Ні      ]
