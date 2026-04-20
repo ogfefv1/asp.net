@@ -4,7 +4,7 @@
     {
         public static IServiceCollection AddStorage(this IServiceCollection services)
         {
-            return services.AddSingleton<IStorageService, LocalStorageService>();
+            return services.AddScoped<IStorageService, LocalStorageService>();
         }
     }
 }

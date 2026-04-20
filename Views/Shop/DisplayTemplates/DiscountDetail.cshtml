@@ -1,0 +1,21 @@
+﻿@model AspKnP231.Data.Entities.DiscountDetail
+<div class="row border m-2 p-2 align-items-center bg-light">
+    <div class="col col-5">
+        <strong><i class="bi bi-tag"></i> @Model.Product?.Title</strong>
+    </div>
+
+    <div class="col col-4 text-muted">
+        @Model.Discount?.Title
+    </div>
+
+    <div class="col col-3 text-end">
+        @if (Model.Price != null)
+        {
+            <span class="text-success fw-bold">@Model.Price.Value.ToString("F2") грн</span>
+        }
+        else
+        {
+            <span class="badge bg-secondary">Загальна знижка</span>
+        }
+    </div>
+</div>

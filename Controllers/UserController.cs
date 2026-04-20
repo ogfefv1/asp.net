@@ -4,6 +4,7 @@ using AspKnP231.Models.Home;
 using AspKnP231.Models.User;
 using AspKnP231.Services.Kdf;
 using AspKnP231.Services.Storage;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -75,10 +76,77 @@ namespace AspKnP231.Controllers
                 });
             }
             String header = token[..dotPosition];
+
+
+            // Base64url decode the Encoded JOSE Header following the
+            // restriction that no line breaks, whitespace, or other additional
+            // characters have been used. Verify that the resulting octet sequence is a UTF-8-encoded...
+            String decodedHeader;
+            try
+            {
+                decodedHeader = Encoding.UTF8.GetString(Base64UrlTextEncoder.Decode(header));
+            }
+            catch
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "The JWT header decode error "
+                });
+            }
+
+            // 
+            JwtHeader jwtHeader;
+            try
+            {
+                jwtHeader = JsonSerializer.Deserialize<JwtHeader>(decodedHeader, JwtModel.options)!;
+            }
+            catch
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "The JWT header must carry valid JSON"
+                });
+            }
+            if (jwtHeader.Typ != "JWT")
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "The JWT header.typ unsupported: 'JWT' only"
+                });
+            }
+            if (jwtHeader.Alg != "HS256")
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "The JWT header.alg unsupported: 'HS256' only"
+                });
+            }
+
+            // Відокремлюємо підпис та підписану частину
+            dotPosition = token.LastIndexOf('.');
+            String signedPart = token[..dotPosition];
+            String signature = token[(dotPosition + 1)..];
+            String jwtSignature = JwtModel.Sign64(signedPart);
+            if (jwtSignature != signature)
+            {
+                return Json(new
+                {
+                    status = 401,
+                    data = "Signature error",
+                    signature,
+                    jwtSignature
+                });
+            }
+
             return Json(new
             {
                 status = 200,
-                data = header
+                data = decodedHeader,
+                signedPart,signature
             });
         }
 
@@ -277,7 +345,7 @@ namespace AspKnP231.Controllers
                             Sub = userAccess.Login,
                             Dob = userAccess.UserData.Birthdate.ToShortDateString(),
                             Iat = DateTime.Now.Ticks,
-                            Ava = userAccess.AvatarFilename,
+                            Ava = _storageService.GetPathPrefix() + userAccess.AvatarFilename,
                             Exp = DateTime.Now.AddMinutes(10).Ticks,
                             Jti = userAccess.Id.ToString(),
                         }

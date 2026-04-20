@@ -7,21 +7,25 @@ namespace AspKnP231.Models.User
 {
     public class JwtModel
     {
-        public JwtHeader Header { get; set; } = new();
+        public JwtHeader Header { get; set; } = new() { Alg = "HS256", Typ = "JWT" };
         public JwtPayload Payload { get; set; } = null!;
 
         private byte[]? _signature;
         public byte[] Signature
         {
-            get => _signature ??=
-                System.Security.Cryptography.HMACSHA256.HashData(
-                    Encoding.UTF8.GetBytes("secret"),
-                    Encoding.UTF8.GetBytes(SignedPart));
+            get => _signature ??= Sign(SignedPart);
             set
             {
                 _signature = value;
             }
         }
+
+        public static byte[] Sign(String input) =>
+         System.Security.Cryptography.HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes("secret"),
+            Encoding.UTF8.GetBytes(input));
+
+        public static String Sign64(String input) => ToBase64(Sign(input));
 
         public override string ToString() => SignedPart + '.' + ToBase64(Signature);
 
@@ -34,7 +38,7 @@ namespace AspKnP231.Models.User
         private static String ToBase64(byte[] input) => Encoding.UTF8.GetString(
                 Base64Url.EncodeToUtf8(input));
 
-        private readonly JsonSerializerOptions options = new()
+        public static readonly JsonSerializerOptions options = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -43,8 +47,8 @@ namespace AspKnP231.Models.User
 
     public class JwtHeader
     {
-        public String Alg { get; set; } = "HS256";
-        public String Typ { get; set; } = "JWT";
+        public String Alg { get; set; } = null!;
+        public String Typ { get; set; } = null!;
         public String? Cty { get; set; }
     }
 

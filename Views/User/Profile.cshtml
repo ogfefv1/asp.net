@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "Profile";
+}
+
+<div class="text-center">
+    <h1 class="display-4">
+        <i class="bi bi-person-circle display-5"></i>
+        Кабінет користувача
+    </h1>
+
+    <div class="mt-4 p-3 border rounded bg-light d-inline-block">
+        <h5 class="text-muted">Час до завершення сесії:</h5>
+        <div id="session-timer" class="display-6 text-danger fw-bold">10:00</div>
+        <small class="text-secondary">Після завершення вас буде автоматично виведено з системи</small>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let timeLeft = 10 * 60;
+
+        const timerElement = document.getElementById("session-timer");
+
+        const countdown = setInterval(() => {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+
+            timerElement.innerHTML = `${minutes}:${seconds}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = "/User/Logout";
+            }
+
+            timeLeft--;
+        }, 1000);
+    </script>
+}

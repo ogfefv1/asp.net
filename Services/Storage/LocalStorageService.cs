@@ -4,10 +4,18 @@ namespace AspKnP231.Services.Storage
     public class LocalStorageService : IStorageService
     {
         private readonly String _path;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public LocalStorageService()
+        public LocalStorageService(IHttpContextAccessor httpContextAccessor)
         {
             _path = Path.Combine(Directory.GetCurrentDirectory(), "LocalStorage/");
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        public string GetPathPrefix()
+        {
+            var request = _httpContextAccessor.HttpContext!.Request;
+            return $"{request.Scheme}://{request.Host}/Storage/Item/";
         }
 
         public byte[] Load(string filename)
