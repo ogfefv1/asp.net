@@ -6,6 +6,7 @@ using AspKnP231.Services.Storage;
 using AspKnP231.Data;
 using Microsoft.EntityFrameworkCore;
 using AspKnP231.Middleware.Auth.Session;
+using AspKnP231.Middleware.Auth.Token;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +87,7 @@ app.UseSession();       // Включення сесій https://learn.microsoft
 // (на відміну від сервісів, порядок додавання яких не грає ролі)
 app.UseDemo();
 app.UseAuthSession();
+app.UseAuthToken();
 
 app.MapControllerRoute(
     name: "default",

@@ -237,6 +237,25 @@ namespace AspKnP231.Migrations
                     });
             });
 
+            modelBuilder.Entity("AspKnP231.Data.Entities.DiscountDetail", b =>
+            {
+                b.HasOne("AspKnP231.Data.Entities.Discount", "Discount")
+                    .WithMany()
+                    .HasForeignKey("DiscountId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.HasOne("AspKnP231.Data.Entities.ShopProduct", "Product")
+                    .WithMany()
+                    .HasForeignKey("ProductId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("Discount");
+
+                b.Navigation("Product");
+            });
+
             modelBuilder.Entity("AspKnP231.Data.Entities.ShopProduct", b =>
             {
                 b.HasOne("AspKnP231.Data.Entities.ShopSection", "Section")
