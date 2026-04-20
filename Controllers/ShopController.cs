@@ -31,7 +31,7 @@ namespace AspKnP231.Controllers
 
                     if (HttpContext.Session.Keys.Contains(nameof(ShopSectionFormModel)))
                     {
-                        // є збережені у сесії дані, тоді відновлюємо, використовуємо та видаляємо
+
                         viewModel.ShopSectionFormModel = JsonSerializer.Deserialize<ShopSectionFormModel>(
                             HttpContext.Session.GetString(nameof(ShopSectionFormModel))!
                         );
@@ -142,7 +142,6 @@ namespace AspKnP231.Controllers
         [HttpPost]
         public JsonResult DiscountDetailFormReceiver(AdminDiscountDetailFormModel formModel)
         {
-            // Д.З.Реалізувати шаблони відображення для деталей акцій (DiscountDetails)
 
             if (Guid.TryParse(formModel.ProductId, out Guid parsedProductId))
             {
@@ -170,10 +169,7 @@ namespace AspKnP231.Controllers
                     Price = (decimal?)formModel.Price
                 });
                 _dataContext.SaveChanges();
-                return Json(new
-                {
-                    status = "OK"
-                });
+                return Json(new { status = "OK" });
             }
             else
             {
@@ -197,10 +193,7 @@ namespace AspKnP231.Controllers
                     FinishMoment = formModel.Finish
                 });
                 _dataContext.SaveChanges();
-                return Json(new
-                {
-                    status = "OK"
-                });
+                return Json(new { status = "OK" });
             }
             else
             {
@@ -211,12 +204,9 @@ namespace AspKnP231.Controllers
 
         public IActionResult ProductFormReceiver(ShopProductFormModel formModel)
         {
-            if (formModel.Slug != null)
+            if (formModel.Slug != null && _dataContext.ShopProducts.Any(p => p.Slug == formModel.Slug))
             {
-                if (_dataContext.ShopProducts.Any(p => p.Slug == formModel.Slug))
-                {
-                    ModelState.AddModelError("Slug", "Даний Slug вже у вжитку");
-                }
+                ModelState.AddModelError("Slug", "Даний Slug вже у вжитку");
             }
 
             if (ModelState.IsValid && formModel.ImageFile != null && formModel.ImageFile.Length > 0)
@@ -224,26 +214,16 @@ namespace AspKnP231.Controllers
                 formModel.ImageUrl = _storageService.Save(formModel.ImageFile);
             }
 
-            HttpContext.Session.SetString(
-                "ShopProductModelState",
-                JsonSerializer.Serialize(ModelState)
-            );
-
-            HttpContext.Session.SetString(
-                nameof(ShopProductFormModel),
-                JsonSerializer.Serialize(formModel)
-            );
+            HttpContext.Session.SetString("ShopProductModelState", JsonSerializer.Serialize(ModelState));
+            HttpContext.Session.SetString(nameof(ShopProductFormModel), JsonSerializer.Serialize(formModel));
             return RedirectToAction(nameof(Index));
         }
 
         public IActionResult SectionFormReceiver(ShopSectionFormModel formModel)
         {
-            if (formModel.Slug != null)
+            if (formModel.Slug != null && _dataContext.ShopSections.Any(s => s.Slug == formModel.Slug))
             {
-                if (_dataContext.ShopSections.Any(s => s.Slug == formModel.Slug))
-                {
-                    ModelState.AddModelError("Slug", "Даний Slug вже у вжитку");
-                }
+                ModelState.AddModelError("Slug", "Даний Slug вже у вжитку");
             }
 
             if (ModelState.IsValid && formModel.ImageFile != null && formModel.ImageFile.Length > 0)
@@ -251,16 +231,55 @@ namespace AspKnP231.Controllers
                 formModel.ImageUrl = _storageService.Save(formModel.ImageFile);
             }
 
-            HttpContext.Session.SetString(
-                "ShopSectionModelState",
-                JsonSerializer.Serialize(ModelState)
-            );
-
-            HttpContext.Session.SetString(
-                nameof(ShopSectionFormModel),
-                JsonSerializer.Serialize(formModel)
-            );
+            HttpContext.Session.SetString("ShopSectionModelState", JsonSerializer.Serialize(ModelState));
+            HttpContext.Session.SetString(nameof(ShopSectionFormModel), JsonSerializer.Serialize(formModel));
             return RedirectToAction(nameof(Index));
         }
+
+
+        // Д.З. Реалізувати коригування даних: при створенні замовлення 
+
+        [HttpPost]
+        public JsonResult Checkout([FromBody] List<CartItemRequest> cartItems)
+        {
+            if (cartItems == null || !cartItems.Any())
+            {
+                return Json(new { status = 400, message = "Кошик порожній" });
+            }
+
+            foreach (var item in cartItems)
+            {
+                var product = _dataContext.ShopProducts.FirstOrDefault(p => p.Id == item.ProductId);
+                if (product == null)
+                {
+                    return Json(new { status = 404, message = $"Товар не знайдено (ID: {item.ProductId})" });
+                }
+
+                if (product.Stock < item.Count)
+                {
+                    return Json(new
+                    {
+                        status = 400,
+                        message = $"Вибачте, товару '{product.Title}' недостатньо. Доступно: {product.Stock}, ви замовляєте: {item.Count}."
+                    });
+                }
+            }
+
+            foreach (var item in cartItems)
+            {
+                var product = _dataContext.ShopProducts.First(p => p.Id == item.ProductId);
+                product.Stock -= item.Count;
+            }
+
+            _dataContext.SaveChanges();
+
+            return Json(new { status = 200, message = "Замовлення успішно оформлено! Залишки оновлено." });
+        }
+    }
+
+    public class CartItemRequest
+    {
+        public Guid ProductId { get; set; }
+        public int Count { get; set; }
     }
 }
