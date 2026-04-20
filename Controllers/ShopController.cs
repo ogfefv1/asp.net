@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
+using AspKnP231.Models.Api; // Додано для доступу до RestResponse
 
 namespace AspKnP231.Controllers
 {
@@ -237,8 +238,6 @@ namespace AspKnP231.Controllers
         }
 
 
-        // Д.З. Реалізувати коригування даних: при створенні замовлення 
-
         [HttpPost]
         public JsonResult Checkout([FromBody] List<CartItemRequest> cartItems)
         {
@@ -274,6 +273,77 @@ namespace AspKnP231.Controllers
             _dataContext.SaveChanges();
 
             return Json(new { status = 200, message = "Замовлення успішно оформлено! Залишки оновлено." });
+        }
+
+
+        // Д.З. LoadHistory
+
+        [HttpGet("history")]
+        public IActionResult LoadHistory()
+        {
+            var userIdString = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+            {
+                return Json(new RestResponse { Meta = new() { AuthStatus = "UnAuthorized" } });
+            }
+
+
+            var historyData = _dataContext.Orders
+                .Where(o => o.UserId == userId)
+                .ToList();
+
+
+            int totalOrdersCount = _dataContext.Orders.Count(o => o.UserId == userId);
+
+            return Json(new RestResponse
+            {
+                Meta = new()
+                {
+                    ServerTime = DateTime.Now.Ticks,
+                    Path = HttpContext.Request.Path.Value,
+                    Total = totalOrdersCount
+                },
+                Data = historyData
+            });
+        }
+
+
+        // Д.З. LoadOrderDetails
+
+        [HttpGet("details/{id}")]
+        public IActionResult LoadOrderDetails(String id)
+        {
+            // Д.З. Перевірка параметра id на формат UUID (Guid)
+            if (!Guid.TryParse(id, out Guid orderGuid))
+            {
+                Response.StatusCode = 400;
+                return Json(new RestResponse
+                {
+                    Meta = new() { Path = HttpContext.Request.Path.Value },
+                    Data = "Помилка: параметр ID має бути у форматі UUID."
+                });
+            }
+
+
+            var order = _dataContext.Orders.FirstOrDefault(o => o.Id == orderGuid);
+
+            // Д.З. статус 404
+            if (order == null)
+            {
+                Response.StatusCode = 404;
+                return Json(new RestResponse
+                {
+                    Meta = new() { Path = HttpContext.Request.Path.Value },
+                    Data = $"Замовлення з ID {orderGuid} не знайдено."
+                });
+            }
+
+            return Json(new RestResponse
+            {
+                Meta = new() { Path = HttpContext.Request.Path.Value },
+                Data = order
+            });
         }
     }
 
