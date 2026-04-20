@@ -38,7 +38,10 @@ namespace AspKnP231.Controllers.Api
                     Cache = 3600,
                     ResourceId = id,
                     AuthStatus = authMessage,
-                    DataType = product == null ? "null" : "object"
+                    DataType = product == null ? "null" : "object",
+
+                    // ДЗ:  динамічний шлях
+                    Path = HttpContext.Request.Path.Value
                 },
                 Data = product == null ? null : new ShopProductPage
                 {
@@ -54,22 +57,20 @@ namespace AspKnP231.Controllers.Api
                         Discount = 0,
                     },
                     Recommended = [.._dataContext
-    .ShopProducts
-    .Where(p => p.Id != product.Id)
-    .OrderBy(_ => Guid.NewGuid())
-    .Take(3)
-    .Select(p => new ShopProductModel{
-        Id = p.Id.ToString(),
-        Title = p.Title,
-        Price = p.Price,
-        Stock = p.Stock,
-        Slug = p.Slug,
-        ImageUrl = _storageService.GetPathPrefix() + (p.ImageUrl ?? "no_image.webp"),
-        Rating = null,
-        Discount = 0,
-    })
-]
-                    // Три випадкові товари окрім даного
+                         .ShopProducts
+                        .Where(p => p.Id != product.Id)
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(3)
+                        .Select(p => new ShopProductModel{
+                            Id = p.Id.ToString(),
+                            Title = p.Title,
+                            Price = p.Price,
+                            Stock = p.Stock,
+                            Slug = p.Slug,
+                            ImageUrl = _storageService.GetPathPrefix() + (p.ImageUrl ?? "no_image.webp"),
+                            Rating = null,
+                            Discount = 0,
+                        })]
                 },
             };
         }

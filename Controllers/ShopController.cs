@@ -142,6 +142,24 @@ namespace AspKnP231.Controllers
         [HttpPost]
         public JsonResult DiscountDetailFormReceiver(AdminDiscountDetailFormModel formModel)
         {
+            // Д.З.Реалізувати шаблони відображення для деталей акцій (DiscountDetails)
+
+            if (Guid.TryParse(formModel.ProductId, out Guid parsedProductId))
+            {
+                var now = DateTime.Now;
+
+                bool isProductAlreadyInDiscount = _dataContext.DiscountDetails
+                    .Include(dd => dd.Discount)
+                    .Any(dd => dd.ProductId == parsedProductId
+                            && dd.Discount.StartMoment <= now
+                            && dd.Discount.FinishMoment >= now);
+
+                if (isProductAlreadyInDiscount)
+                {
+                    ModelState.AddModelError("ProductId", "Цей товар вже бере участь в активній акції!");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 _dataContext.DiscountDetails.Add(new()
